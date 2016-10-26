@@ -119,6 +119,7 @@ void MultiDimFit::applyOptions(const boost::program_options::variables_map &vm)
     hasMaxDeltaNLLForProf_ = !vm["maxDeltaNLLForProf"].defaulted();
     loadedSnapshot_ = !vm["snapshotName"].defaulted();
     savingSnapshot_ = (!loadedSnapshot_) && vm.count("saveWorkspace");
+		save_toys_ = vm.count("saveToys");
 }
 
 bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooStats::ModelConfig *mc_b, RooAbsData &data, double &limit, double &limitErr, const double *hint) { 
@@ -128,9 +129,23 @@ bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooS
     static int isInit = false;
     if (!isInit) { initOnce(w, mc_s); isInit = true; }
 
+		// if (currentToy_ < 1){
+		// 	fitOut_.reset(TFile::Open("./multiDfit.root", "RECREATE")); 
+		// }
+		// if (nToys_ >= 1) {
+		// 	if (save_toys_) {
+		// 		save_dir_ = fitOut_->mkdir(
+		// 			TString::Format("toy_%d", currentToy_)
+		// 			);
+		// 	}
+		// 	else save_dir_ = fitOut_.get();
+		// }
+		// else save_dir_ = fitOut_.get();
+		
+		
     // Get PDF
     RooAbsPdf &pdf = *mc_s->GetPdf();
-
+		
     // Process POI not in list
     nOtherFloatingPoi_ = 0;
     int nConstPoi=0;
@@ -171,6 +186,17 @@ bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooS
         for (int i = 0, n = poi_.size(); i < n; ++i) {
             poiVals_[i] = poiVars_[i]->getVal();
         }
+// <<<<<<< HEAD
+//         if (algo_ != None) {
+// 		for(unsigned int j=0; j<specifiedNuis_.size(); j++){
+// 			specifiedVals_[j]=specifiedVars_[j]->getVal();
+// 		}
+// 		for(unsigned int j=0; j<specifiedFuncNames_.size(); j++){
+// 			specifiedFuncVals_[j]=specifiedFunc_[j]->getVal();
+// 		}
+// 		Combine::commitPoint(/*expected=*/false, /*quantile=*/1.); // otherwise we get it multiple times
+// 				}
+// =======
         //if (algo_ != None) {
 	for(unsigned int j=0; j<specifiedNuis_.size(); j++){
 		specifiedVals_[j]=specifiedVars_[j]->getVal();
@@ -183,6 +209,7 @@ bool MultiDimFit::runSpecific(RooWorkspace *w, RooStats::ModelConfig *mc_s, RooS
 	}
 	Combine::commitPoint(/*expected=*/false, /*quantile=*/-1.); // Combine will not commit a point anymore at -1 so can do it here 
 	//}
+// >>>>>>> slc6-root5.34.17
     }
    
     //set snapshot for best fit

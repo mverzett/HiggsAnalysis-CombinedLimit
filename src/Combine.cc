@@ -774,15 +774,19 @@ void Combine::run(TString hlfFile, const std::string &dataset, double &limit, do
                 toymcoptutils::SimPdfGenInfo newToyMC(*genPdf, *observables, !unbinned_); 
                 dobs = newToyMC.generateAsimov(weightVar_); // as simple as that
             }
+          } else {
+            toymcoptutils::SimPdfGenInfo newToyMC(*genPdf, *observables, !unbinned_); 
+            dobs = newToyMC.generateAsimov(weightVar_); // as simple as that
+          }
         } else if (isExtended) {
-            if (unbinned_) {
-                throw std::invalid_argument("Asimov datasets can only be generated binned");
-            } else {
-                dobs = genPdf->generateBinned(*observables,RooFit::Extended(),RooFit::Asimov());
-            }
-	} else {
-	  dobs = genPdf->generate(*observables,1,RooFit::Asimov());
-	}
+          if (unbinned_) {
+            throw std::invalid_argument("Asimov datasets can only be generated binned");
+          } else {
+            dobs = genPdf->generateBinned(*observables,RooFit::Extended(),RooFit::Asimov());
+          }
+        } else {
+          dobs = genPdf->generate(*observables,1,RooFit::Asimov());
+        }
       }
     } else if (dobs == 0) {
       std::cerr << "No observed data '" << dataset << "' in the workspace. Cannot compute limit.\n" << std::endl;
@@ -851,27 +855,27 @@ void Combine::run(TString hlfFile, const std::string &dataset, double &limit, do
 	  	if (systDs->numEntries()>=iToy) *vars = *systDs->get(iToy-1);
 	  }
           if (toysFrequentist_) w->saveSnapshot("clean", w->allVars());
-	  if (verbose > 3) utils::printPdf(genPdf);
-	}
+          if (verbose > 3) utils::printPdf(genPdf);
+        }
         if (POI->find("r")) {
           if (expectSignal_) ((RooRealVar*)POI->find("r"))->setVal(expectSignal_);
         }
-	std::cout << "Generate toy " << iToy << "/" << nToys << std::endl;
-	if (isExtended) {
+        std::cout << "Generate toy " << iToy << "/" << nToys << std::endl;
+        if (isExtended) {
           if (newGen_) {
             absdata_toy = newToyMC.generate(weightVar_); // as simple as that
           } else if (unbinned_) {
     	      absdata_toy = genPdf->generate(*observables,RooFit::Extended());
           } else if (generateBinnedWorkaround_) {
-              std::auto_ptr<RooDataSet> unbinn(genPdf->generate(*observables,RooFit::Extended()));
-              absdata_toy = new RooDataHist("toy","binned toy", *observables, *unbinn);
+            std::auto_ptr<RooDataSet> unbinn(genPdf->generate(*observables,RooFit::Extended()));
+            absdata_toy = new RooDataHist("toy","binned toy", *observables, *unbinn);
           } else {
     	      absdata_toy = genPdf->generateBinned(*observables,RooFit::Extended());
           }
-	} else {
-	  RooDataSet *data_toy = genPdf->generate(*observables,1);
-	  absdata_toy = data_toy;
-	}
+        } else {
+          RooDataSet *data_toy = genPdf->generate(*observables,1);
+          absdata_toy = data_toy;
+        }
       } else {
 	absdata_toy = dynamic_cast<RooAbsData *>(readToysFromHere->Get(TString::Format("toys/toy_%d",iToy)));
 	if (absdata_toy == 0) {
@@ -891,6 +895,7 @@ void Combine::run(TString hlfFile, const std::string &dataset, double &limit, do
         }
       }
       if (verbose > (isExtended ? 3 : 2)) utils::printRAD(absdata_toy);
+
       w->loadSnapshot("clean");
       //if (verbose > 1) utils::printPdf(w, "model_b");
       if (mklimit(w,mc,mc_bonly,*absdata_toy,limit,limitErr)) {
@@ -913,24 +918,24 @@ void Combine::run(TString hlfFile, const std::string &dataset, double &limit, do
     expLimit /= nLimits;
     double rms = 0;
     for (std::vector<double>::const_iterator itl = limitHistory.begin(); itl != limitHistory.end(); ++itl) {
-        rms += pow(*itl-expLimit, 2);
+      rms += pow(*itl-expLimit, 2);
     }
     if (nLimits > 1) {
-        rms = sqrt(rms/(nLimits-1)/nLimits);
-        cout << "mean   expected limit: r < " << expLimit << " +/- " << rms << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
+      rms = sqrt(rms/(nLimits-1)/nLimits);
+      cout << "mean   expected limit: r < " << expLimit << " +/- " << rms << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
     } else {
-        cout << "mean   expected limit: r < " << expLimit << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
+      cout << "mean   expected limit: r < " << expLimit << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
     }
     sort(limitHistory.begin(), limitHistory.end());
     if (nLimits > 0) {
-        double medianLimit = (nLimits % 2 == 0 ? 0.5*(limitHistory[nLimits/2-1]+limitHistory[nLimits/2]) : limitHistory[nLimits/2]);
-        cout << "median expected limit: r < " << medianLimit << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
-        double hi68 = limitHistory[min<int>(nLimits-1,  ceil(0.84  * nLimits))];
-        double lo68 = limitHistory[min<int>(nLimits-1, floor(0.16  * nLimits))];
-        double hi95 = limitHistory[min<int>(nLimits-1,  ceil(0.975 * nLimits))];
-        double lo95 = limitHistory[min<int>(nLimits-1, floor(0.025 * nLimits))];
-        cout << "   68% expected band : " << lo68 << " < r < " << hi68 << endl;
-        cout << "   95% expected band : " << lo95 << " < r < " << hi95 << endl;
+      double medianLimit = (nLimits % 2 == 0 ? 0.5*(limitHistory[nLimits/2-1]+limitHistory[nLimits/2]) : limitHistory[nLimits/2]);
+      cout << "median expected limit: r < " << medianLimit << " @ " << cl*100 << "%CL (" <<nLimits << " toyMC)" << endl;
+      double hi68 = limitHistory[min<int>(nLimits-1,  ceil(0.84  * nLimits))];
+      double lo68 = limitHistory[min<int>(nLimits-1, floor(0.16  * nLimits))];
+      double hi95 = limitHistory[min<int>(nLimits-1,  ceil(0.975 * nLimits))];
+      double lo95 = limitHistory[min<int>(nLimits-1, floor(0.025 * nLimits))];
+      cout << "   68% expected band : " << lo68 << " < r < " << hi68 << endl;
+      cout << "   95% expected band : " << lo95 << " < r < " << hi95 << endl;
     }
   }
   
