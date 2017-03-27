@@ -774,10 +774,6 @@ void Combine::run(TString hlfFile, const std::string &dataset, double &limit, do
                 toymcoptutils::SimPdfGenInfo newToyMC(*genPdf, *observables, !unbinned_); 
                 dobs = newToyMC.generateAsimov(weightVar_); // as simple as that
             }
-          } else {
-            toymcoptutils::SimPdfGenInfo newToyMC(*genPdf, *observables, !unbinned_); 
-            dobs = newToyMC.generateAsimov(weightVar_); // as simple as that
-          }
         } else if (isExtended) {
           if (unbinned_) {
             throw std::invalid_argument("Asimov datasets can only be generated binned");
